@@ -690,9 +690,21 @@
             html += '<p class="mb-2">' + sorted.map(c => c.rating + '%').join(' + ') + ' = ?</p>';
             
             const results = calculateOverall();
-                html += '<p class="text-emerald-500 font-bold">Result: ' + results.finalRating + '% combined disability rating</p>';
+            html += '<p class="text-emerald-500 font-bold">Result: ' + results.finalRating + '% combined disability rating</p>';
+            
+            if (results.bilateralApplied) {
+                html += '<p class="text-sm text-emerald-300">✓ Bilateral factor applied (+10%)</p>';
+            }
+
+            document.getElementById('calculation-display').innerHTML = html;
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const element = document.querySelector('.sticky');
+            const opt = {
                 margin: 10,
-                filename: 'VA_Disability_Calculation.pdf',
+                filename: 'Veteran_Disability_Calculation.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }

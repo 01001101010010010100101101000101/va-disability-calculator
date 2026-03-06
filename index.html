@@ -161,6 +161,9 @@
         .step-box { transition: all 0.3s ease; }
         .step-box:hover { transform: translateX(4px); }
         .calculation-step { font-family: 'Monaco', 'Courier New', monospace; }
+        .calculator-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .calculator-section.active { display: block; }
+        .calculator-tab.active { border-bottom-color: #2563eb; color: #2563eb; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
@@ -183,6 +186,38 @@
         </div>
     </nav>
 
+    <!-- Calculator Selection Navigation -->
+    <div class="bg-white border-b border-slate-200 shadow-sm sticky top-16 z-30">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex overflow-x-auto scrollbar-hide space-x-1 sm:space-x-2">
+                <button onclick="switchCalculator('disability')" class="calculator-tab active px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="disability">
+                    <i class="fa-solid fa-chart-pie mr-1 sm:mr-2"></i> Disability Rating
+                </button>
+                <button onclick="switchCalculator('retroactive')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="retroactive">
+                    <i class="fa-solid fa-hourglass-end mr-1 sm:mr-2"></i> Retroactive Pay
+                </button>
+                <button onclick="switchCalculator('pension')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="pension">
+                    <i class="fa-solid fa-hand-holding-heart mr-1 sm:mr-2"></i> VA Pension
+                </button>
+                <button onclick="switchCalculator('homeloan')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="homeloan">
+                    <i class="fa-solid fa-house mr-1 sm:mr-2"></i> Home Loan
+                </button>
+                <button onclick="switchCalculator('ratingmatcher')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="ratingmatcher">
+                    <i class="fa-solid fa-magic mr-1 sm:mr-2"></i> Rating Matcher
+                </button>
+                <button onclick="switchCalculator('iu')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="iu">
+                    <i class="fa-solid fa-briefcase mr-1 sm:mr-2"></i> IU Benefits
+                </button>
+                <button onclick="switchCalculator('gibill')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="gibill">
+                    <i class="fa-solid fa-graduation-cap mr-1 sm:mr-2"></i> GI Bill
+                </button>
+                <button onclick="switchCalculator('sbp')" class="calculator-tab px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap" data-calc="sbp">
+                    <i class="fa-solid fa-shield-heart mr-1 sm:mr-2"></i> SBP
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sticky Disclaimer Banner -->
     <div class="bg-red-50 border-l-4 border-red-500 p-3 text-sm text-red-800 no-print" role="alert">
         <i class="fa-solid fa-triangle-exclamation mr-2"></i>
@@ -191,6 +226,9 @@
 
     <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
+        
+        <!-- CALCULATOR 1: Disability Rating Calculator (Default) -->
+        <div id="disability-calc" class="calculator-section">
         <div class="mb-8">
             <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Veteran Disability Pay Calculator</h1>
             <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Combined ratings, bilateral factors, and 2026 compensation rates (2.8% COLA)</p>
@@ -480,6 +518,434 @@
                 </div>
             </div>
         </div>
+        </div> <!-- END: Disability Calculator Section -->
+
+        <!-- CALCULATOR 2: Retroactive Pay Calculator -->
+        <div id="retroactive-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">VA Retroactive Pay Calculator</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate back pay from your effective date to today</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Combined Disability Rating</label>
+                            <select id="retro-rating" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none font-semibold cursor-pointer">
+                                <option value="10">10%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30%</option>
+                                <option value="40">40%</option>
+                                <option value="50">50%</option>
+                                <option value="60">60%</option>
+                                <option value="70">70%</option>
+                                <option value="80">80%</option>
+                                <option value="90">90%</option>
+                                <option value="100">100%</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Effective Date (When rating started)</label>
+                            <input type="date" id="retro-effective-date" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none">
+                        </div>
+                        <button onclick="calculateRetroactive()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-sm">
+                            <i class="fa-solid fa-calculator mr-2"></i> Calculate Retroactive Pay
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-blue-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-blue-100 tracking-widest uppercase text-sm mb-6 relative z-10">Retroactive Payment</h2>
+                        <div class="mt-6 bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10">
+                            <p class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Total Retroactive Pay</p>
+                            <p class="text-3xl sm:text-5xl font-extrabold text-emerald-400 drop-shadow-lg" id="retro-total">$0.00</p>
+                            <p class="text-xs text-blue-200/70 mt-2 font-medium">Tax-Free Lump Sum</p>
+                        </div>
+                        <div class="mt-3 bg-white/5 rounded-xl p-3 sm:p-4 border border-white/5 relative z-10 space-y-2 text-xs text-blue-100">
+                            <div><strong>Months of Back Pay:</strong> <span id="retro-months">0</span></div>
+                            <div><strong>Months from Effective Date:</strong> <span id="retro-period">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 3: VA Pension Calculator -->
+        <div id="pension-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">VA Pension Calculator (Aid & Attendance)</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate VA pension benefits for housebound and aid & attendance scenarios</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Pension Type</h2>
+                        <div class="space-y-2">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-type" value="regular" onchange="updatePensionType()" checked class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Non-Service Connected Pension (Regular)</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-type" value="aid-attendance" onchange="updatePensionType()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Aid & Attendance Eligible</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-type" value="housebound" onchange="updatePensionType()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Housebound Eligible</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Family Status</h2>
+                        <div class="space-y-3">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-status" value="alone" onchange="updatePensionCalculation()" checked class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Unmarried Veteran</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-status" value="spouse" onchange="updatePensionCalculation()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Married (with spouse)</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="pension-status" value="children" onchange="updatePensionCalculation()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">With children</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Number of Dependents</label>
+                            <input type="number" id="pension-dependents" min="0" max="10" value="0" onchange="updatePensionCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-emerald-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-emerald-100 tracking-widest uppercase text-sm mb-6 relative z-10">Monthly Pension Estimate</h2>
+                        <div class="mt-6 bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10">
+                            <p class="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">VA Pension Amount</p>
+                            <p class="text-3xl sm:text-5xl font-extrabold text-emerald-300 drop-shadow-lg" id="pension-monthly">$0.00</p>
+                            <p class="text-xs text-emerald-200/70 mt-2 font-medium">Tax-Free Monthly Payment</p>
+                        </div>
+                        <div class="mt-3 bg-white/5 rounded-xl p-3 sm:p-4 border border-white/5 relative z-10 space-y-2 text-xs text-emerald-100">
+                            <div><strong>Annual Pension:</strong> <span id="pension-annual">$0.00</span></div>
+                            <p class="text-xs text-emerald-200 italic mt-2">Income limits apply. Verify at VA.gov</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 4: VA Home Loan Calculator -->
+        <div id="homeloan-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">VA Home Loan Calculator</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate your VA home loan limits and borrowing power</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Service Period</label>
+                            <select id="loan-service-period" onchange="updateLoanCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="pre1990">Pre-1990 Reserve/National Guard</option>
+                                <option value="post1990">Post-1990 Active Duty</option>
+                                <option value="reservist">Reservist (8+ years)</option>
+                                <option value="medal">Medal of Honor Recipient</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Entitlement Status</label>
+                            <select id="loan-entitlement" onchange="updateLoanCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="full">Full Entitlement (No prior loans)</option>
+                                <option value="partial">Partial Entitlement (Previous VA loan)</option>
+                                <option value="restore">Restored Entitlement</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Home Price ($)</label>
+                            <input type="number" id="loan-home-price" placeholder="300000" onchange="updateLoanCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Down Payment ($)</label>
+                            <input type="number" id="loan-down-payment" placeholder="0" onchange="updateLoanCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-purple-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-purple-100 tracking-widest uppercase text-sm mb-6 relative z-10">Loan Summary</h2>
+                        <div class="mt-4 space-y-3 relative z-10 text-sm">
+                            <div class="bg-white/10 rounded-lg p-3 border border-white/10">
+                                <p class="text-purple-300 text-xs font-bold uppercase mb-1">VA Loan Limit</p>
+                                <p class="text-2xl font-bold text-purple-300" id="loan-limit">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3 border border-white/10">
+                                <p class="text-purple-300 text-xs font-bold uppercase mb-1">Max Borrowing (0% down)</p>
+                                <p class="text-2xl font-bold text-purple-300" id="loan-max">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3 border border-white/10">
+                                <p class="text-purple-300 text-xs font-bold uppercase mb-1">Max Loan Amount</p>
+                                <p class="text-2xl font-bold text-purple-300" id="loan-amount">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3 border border-white/10">
+                                <p class="text-purple-300 text-xs font-bold uppercase mb-1">Est. Monthly Payment</p>
+                                <p class="text-2xl font-bold text-purple-300" id="loan-payment">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 5: Disability Rating Matcher -->
+        <div id="ratingmatcher-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Disability Rating Matcher</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Match your symptoms to potential VA disability ratings</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Select Your Symptoms/Conditions</h2>
+                        <div id="symptom-list" class="space-y-2">
+                            <label class="flex items-start cursor-pointer p-3 hover:bg-blue-50 rounded-lg">
+                                <input type="checkbox" value="70" class="symptom-checkbox mt-1" onchange="updateRatingMatch()"> 
+                                <span class="ml-3"><strong>Severe PTSD -</strong> Frequent panic attacks, nightmares, 70%</span>
+                            </label>
+                            <label class="flex items-start cursor-pointer p-3 hover:bg-blue-50 rounded-lg">
+                                <input type="checkbox" value="50" class="symptom-checkbox mt-1" onchange="updateRatingMatch()">
+                                <span class="ml-3"><strong>Moderate Sleep Apnea -</strong> Requires CPAP, impacts daily function, 50%</span>
+                            </label>
+                            <label class="flex items-start cursor-pointer p-3 hover:bg-blue-50 rounded-lg">
+                                <input type="checkbox" value="40" class="symptom-checkbox mt-1" onchange="updateRatingMatch()">
+                                <span class="ml-3"><strong>Hearing Loss -</strong> Bilateral, requires hearing aids, 40%</span>
+                            </label>
+                            <label class="flex items-start cursor-pointer p-3 hover:bg-blue-50 rounded-lg">
+                                <input type="checkbox" value="30" class="symptom-checkbox mt-1" onchange="updateRatingMatch()">
+                                <span class="ml-3"><strong>Tinnitus -</strong> Bilateral ringing in ears, 10%</span>
+                            </label>
+                            <label class="flex items-start cursor-pointer p-3 hover:bg-blue-50 rounded-lg">
+                                <input type="checkbox" value="40" class="symptom-checkbox mt-1" onchange="updateRatingMatch()">
+                                <span class="ml-3"><strong>Back Injury -</strong> Limited mobility, occasional pain, 40%</span>
+                            </label>
+                        </div>
+                        <button onclick="resetRatingMatcher()" class="w-full bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                            <i class="fa-solid fa-rotate-left mr-2"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-orange-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-orange-100 tracking-widest uppercase text-sm mb-6 relative z-10">Estimated Rating</h2>
+                        <div class="flex justify-center mb-6 relative z-10">
+                            <div class="relative w-32 sm:w-48 h-32 sm:h-48">
+                                <svg class="transform -rotate-90 w-32 sm:w-48 h-32 sm:h-48">
+                                    <circle cx="60" cy="60" r="50" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-700 opacity-50" />
+                                    <circle id="matcher-ring" cx="60" cy="60" r="50" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="314.16" stroke-dashoffset="314.16" class="text-orange-400 transition-all duration-1000 ease-out" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span class="text-3xl sm:text-5xl font-extrabold" id="matcher-rating">0%</span>
+                                    <span class="text-xs text-orange-200 mt-1 uppercase tracking-wider font-semibold">Combined</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-orange-100/70 text-center" id="matcher-note">Select symptoms above to see estimated rating</p>
+                        <p class="text-xs text-orange-200 mt-4 italic text-center">⚠️ This is an educational estimate only. Official VA ratings require medical evidence.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 6: Individual Unemployability (IU) Calculator -->
+        <div id="iu-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Individual Unemployability (IU) Calculator</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate your IU benefits (100% for unemployability due to service-connected disabilities)</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Your Situation</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Combined Disability Rating</label>
+                            <select id="iu-rating" onchange="updateIUCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer font-semibold">
+                                <option value="0">Below 20%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30-40%</option>
+                                <option value="50">50-60%</option>
+                                <option value="70">70%+</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Unemployment Status</label>
+                            <select id="iu-employment" onchange="updateIUCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="employed">Working</option>
+                                <option value="unemployed">Unemployed due to disabilities</option>
+                                <option value="underemployed">Underemployed or part-time only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Years Unable to Work</label>
+                            <input type="number" id="iu-years" min="0" value="1" onchange="updateIUCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                        <button onclick="calculateIU()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-sm">
+                            <i class="fa-solid fa-briefcase mr-2"></i> Check IU Eligibility
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-indigo-100 tracking-widest uppercase text-sm mb-6 relative z-10">Individual Unemployability</h2>
+                        <div class="bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10 mb-4">
+                            <p class="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Eligibility Status</p>
+                            <p class="text-lg font-bold text-indigo-300" id="iu-status">Likely eligible</p>
+                            <p class="text-xs text-indigo-200/70 mt-2" id="iu-details">100% Rating equivalent pay</p>
+                        </div>
+                        <div class="bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10">
+                            <p class="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Est. Monthly IU Pay</p>
+                            <p class="text-3xl sm:text-5xl font-extrabold text-indigo-400 drop-shadow-lg" id="iu-monthly">$3,938.58</p>
+                            <p class="text-xs text-indigo-200/70 mt-2 font-medium">2026 Rate (100%)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 7: VA Education Benefits (GI Bill) Calculator -->
+        <div id="gibill-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">VA Education Benefits Calculator (GI Bill)</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate your GI Bill education benefits and housing allowance</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">GI Bill Type</h2>
+                        <div class="space-y-2">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="gibill-type" value="post911" onchange="updateGIBillType()" checked class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Post-9/11 GI Bill</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="gibill-type" value="mgib" onchange="updateGIBillType()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Montgomery GI Bill (MGIB)</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="gibill-type" value="reserve" onchange="updateGIBillType()" class="w-4 h-4">
+                                <span class="ml-2 text-sm font-semibold text-slate-700">Reserve GI Bill</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Education Details</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tuition Cost /Semester</label>
+                            <input type="number" id="gibill-tuition" placeholder="5000" onchange="updateGIBillCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">School Location</label>
+                            <select id="gibill-location" onchange="updateGIBillCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="fulltime">Full-Time In-Person</option>
+                                <option value="parttime">Part-Time</option>
+                                <option value="online">Online</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Months of Use (Remaining)</label>
+                            <input type="number" id="gibill-months" min="1" max="36" placeholder="36" onchange="updateGIBillCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-cyan-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-cyan-100 tracking-widest uppercase text-sm mb-6 relative z-10">Benefits Summary</h2>
+                        <div class="space-y-3 relative z-10">
+                            <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                                <p class="text-cyan-300 text-xs font-bold uppercase mb-1">Monthly Education Benefit</p>
+                                <p class="text-2xl font-bold text-cyan-300" id="gibill-monthly">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                                <p class="text-cyan-300 text-xs font-bold uppercase mb-1">Housing Allowance (BAH)</p>
+                                <p class="text-2xl font-bold text-cyan-300" id="gibill-bah">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                                <p class="text-cyan-300 text-xs font-bold uppercase mb-1">Total Monthly Benefits</p>
+                                <p class="text-3xl font-bold text-cyan-400" id="gibill-total">$0</p>
+                            </div>
+                            <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                                <p class="text-cyan-300 text-xs font-bold uppercase mb-1">Total Remaining Benefits</p>
+                                <p class="text-2xl font-bold text-cyan-300" id="gibill-total-remaining">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR 8: Survivor Benefit Plan (SBP) Calculator -->
+        <div id="sbp-calc" class="calculator-section hidden">
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Survivor Benefit Plan (SBP) Calculator</h1>
+                <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Calculate monthly survivor benefits for your family</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Current Military Situation</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Military Status</label>
+                            <select id="sbp-status" onchange="updateSBPCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="active">Active Duty</option>
+                                <option value="reserve">Reserve/Guard</option>
+                                <option value="retired">Military Retired</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Years of Service / Military Retirement Pay</label>
+                            <input type="number" id="sbp-retirement" placeholder="3000" onchange="updateSBPCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Beneficiary Information</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Primary Beneficiary</label>
+                            <select id="sbp-beneficiary" onchange="updateSBPCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none cursor-pointer">
+                                <option value="spouse">Spouse Only</option>
+                                <option value="spouse-child">Spouse & Children</option>
+                                <option value="child">Children Only</option>
+                                <option value="parent">Parent(s)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Number of Dependents</label>
+                            <input type="number" id="sbp-dependents" min="0" value="1" onchange="updateSBPCalculation()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-3 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative">
+                    <div class="sticky top-24 bg-gradient-to-br from-rose-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-rose-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <h2 class="text-center font-bold text-rose-100 tracking-widest uppercase text-sm mb-6 relative z-10">Survivor Benefits Estimate</h2>
+                        <div class="bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10 mb-4">
+                            <p class="text-rose-200 text-xs font-bold uppercase tracking-widest mb-1">Monthly SBP Payment</p>
+                            <p class="text-3xl sm:text-5xl font-extrabold text-rose-300 drop-shadow-lg" id="sbp-monthly">$0.00</p>
+                            <p class="text-xs text-rose-200/70 mt-2 font-medium">To designated beneficiaries</p>
+                        </div>
+                        <div class="bg-white/10 rounded-xl p-3 border border-white/10 relative z-10 space-y-2 text-xs text-rose-100">
+                            <div><strong>Lifelong Survivor Benefit:</strong> Yes</div>
+                            <div><strong>Annual Payment:</strong> <span id="sbp-annual">$0.00</span></div>
+                            <p class="text-xs text-rose-200 italic mt-3">SBP premiums deducted from military pay. Verify enrollment at MilConnect.mil</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Help Modal -->
@@ -993,8 +1459,266 @@
             updateCalculationDisplay();
         }
 
+        // =======================
+        // CALCULATOR SWITCHING
+        // =======================
+        function switchCalculator(calcName) {
+            // Hide all calculators
+            document.querySelectorAll('.calculator-section').forEach(section => {
+                section.classList.remove('active');
+                section.classList.add('hidden');
+            });
+            
+            // Hide all tabs
+            document.querySelectorAll('.calculator-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected calculator
+            const calcDiv = document.getElementById(calcName + '-calc');
+            if (calcDiv) {
+                calcDiv.classList.remove('hidden');
+                calcDiv.classList.add('active');
+            }
+            
+            // Highlight selected tab
+            const tab = document.querySelector(`[data-calc="${calcName}"]`);
+            if (tab) {
+                tab.classList.add('active');
+            }
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // =======================
+        // CALCULATOR 2: RETROACTIVE PAY
+        // =======================
+        function calculateRetroactive() {
+            const rating = parseInt(document.getElementById('retro-rating').value);
+            const effectiveDate = new Date(document.getElementById('retro-effective-date').value);
+            const today = new Date();
+            
+            if (!effectiveDate || effectiveDate > today) {
+                alert('Please select a valid effective date');
+                return;
+            }
+            
+            const monthsDiff = (today.getFullYear() - effectiveDate.getFullYear()) * 12 + 
+                              (today.getMonth() - effectiveDate.getMonth());
+            
+            const monthlyRate = rating === 10 ? rates2026[10].base : rates2026[rating]?.alone || 0;
+            const totalRetroactive = monthlyRate * monthsDiff;
+            
+            document.getElementById('retro-total').textContent = '$' + totalRetroactive.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('retro-months').textContent = monthsDiff;
+            document.getElementById('retro-period').textContent = monthsDiff;
+        }
+
+        // =======================
+        // CALCULATOR 3: VA PENSION
+        // =======================
+        function updatePensionType() {
+            updatePensionCalculation();
+        }
+
+        function updatePensionCalculation() {
+            const pensionType = document.querySelector('input[name="pension-type"]:checked').value;
+            const status = document.querySelector('input[name="pension-status"]:checked').value;
+            const dependents = parseInt(document.getElementById('pension-dependents').value) || 0;
+            
+            // 2026 VA Pension rates (approximate with 2.8% COLA)
+            const pensionRates = {
+                regular: { alone: 1025, spouse: 1245, child: 415 },
+                'aid-attendance': { alone: 2363, spouse: 2570, child: 793 },
+                housebound: { alone: 1253, spouse: 1462, child: 489 }
+            };
+            
+            let monthlyPension = pensionRates[pensionType]?.alone || 0;
+            
+            if (status === 'spouse' || status === 'children') {
+                monthlyPension = pensionRates[pensionType]?.spouse || 0;
+                monthlyPension += (dependents * (pensionRates[pensionType]?.child || 0));
+            } else if (dependents > 0) {
+                monthlyPension += (dependents * (pensionRates[pensionType]?.child || 0));
+            }
+            
+            document.getElementById('pension-monthly').textContent = '$' + monthlyPension.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('pension-annual').textContent = '$' + (monthlyPension * 12).toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        // =======================
+        // CALCULATOR 4: VA HOME LOAN
+        // =======================
+        function updateLoanCalculation() {
+            const serviceperiod = document.getElementById('loan-service-period').value;
+            const entitlement = document.getElementById('loan-entitlement').value;
+            const homePrice = parseInt(document.getElementById('loan-home-price').value) || 0;
+            const downPayment = parseInt(document.getElementById('loan-down-payment').value) || 0;
+            
+            // 2026 VA Loan limits (max loan amount without down payment)
+            let loanLimit = 828000; // 2026 max entitlement
+            
+            if (entitlement === 'partial') {
+                loanLimit = 414000;
+            } else if (entitlement === 'restored') {
+                loanLimit = 828000;
+            }
+            
+            // Max loan is the minimum of home price or loan limit
+            let maxLoan = Math.min(homePrice || loanLimit, loanLimit);
+            let loanAmount = maxLoan - downPayment;
+            
+            // Estimate monthly payment (assume 6% interest, 30-year mortgage)
+            const monthlyRate = 0.06 / 12;
+            const numPayments = 360;
+            const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+                                  (Math.pow(1 + monthlyRate, numPayments) - 1);
+            
+            document.getElementById('loan-limit').textContent = '$' + loanLimit.toLocaleString();
+            document.getElementById('loan-max').textContent = '$' + loanLimit.toLocaleString();
+            document.getElementById('loan-amount').textContent = '$' + loanAmount.toLocaleString();
+            document.getElementById('loan-payment').textContent = '$' + monthlyPayment.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        // =======================
+        // CALCULATOR 5: RATING MATCHER
+        // =======================
+        function updateRatingMatch() {
+            const checkboxes = document.querySelectorAll('.symptom-checkbox:checked');
+            const ratings = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            if (ratings.length === 0) {
+                document.getElementById('matcher-rating').textContent = '0%';
+                document.getElementById('matcher-note').textContent = 'Select symptoms above to see estimated rating';
+                document.getElementById('matcher-ring').style.strokeDashoffset = '314.16';
+                return;
+            }
+            
+            const combined = combineRatings(ratings);
+            const finalRating = Math.round(combined / 10) * 10;
+            
+            document.getElementById('matcher-rating').textContent = finalRating + '%';
+            document.getElementById('matcher-note').textContent = finalRating >= 50 ? '✓ Likely eligible for 100% IU' : 'Educational estimate only';
+            
+            const circumference = 314.16;
+            const offset = circumference - (finalRating / 100) * circumference;
+            document.getElementById('matcher-ring').style.strokeDashoffset = offset;
+        }
+
+        function resetRatingMatcher() {
+            document.querySelectorAll('.symptom-checkbox').forEach(cb => cb.checked = false);
+            updateRatingMatch();
+        }
+
+        // =======================
+        // CALCULATOR 6: INDIVIDUAL UNEMPLOYABILITY
+        // =======================
+        function updateIUCalculation() {
+            calculateIU();
+        }
+
+        function calculateIU() {
+            const rating = document.getElementById('iu-rating').value;
+            const employment = document.getElementById('iu-employment').value;
+            const years = parseInt(document.getElementById('iu-years').value);
+            
+            let eligible = false;
+            let details = '';
+            
+            if (employment === 'employed') {
+                eligible = false;
+                details = 'Still employed - must be unable to work';
+            } else if (employment === 'unemployed' || employment === 'underemployed') {
+                if (rating === '70' || rating === '50' || rating === '30') {
+                    eligible = true;
+                    details = '100% IU Pay from effective date';
+                } else if (rating === '20') {
+                    eligible = false;
+                    details = 'May qualify - requires medical evidence & 2+ years employed';
+                } else {
+                    eligible = false;
+                    details = 'Below typical IU thresholds';
+                }
+            }
+            
+            document.getElementById('iu-status').textContent = eligible ? 'Likely Eligible' : 'May Not Qualify';
+            document.getElementById('iu-status').className = eligible ? 'text-lg font-bold text-emerald-300' : 'text-lg font-bold text-orange-300';
+            document.getElementById('iu-details').textContent = details;
+            document.getElementById('iu-monthly').textContent = '$' + rates2026[100].alone.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        // =======================
+        // CALCULATOR 7: GI BILL
+        // =======================
+        function updateGIBillType() {
+            updateGIBillCalculation();
+        }
+
+        function updateGIBillCalculation() {
+            const gibillType = document.querySelector('input[name="gibill-type"]:checked').value;
+            const tuition = parseInt(document.getElementById('gibill-tuition').value) || 0;
+            const location = document.getElementById('gibill-location').value;
+            const months = parseInt(document.getElementById('gibill-months').value) || 36;
+            
+            // 2026 GI Bill rates (Post-9/11 100% benefit)
+            let monthlyEducation = 0;
+            let monthlyBAH = 0;
+            
+            if (gibillType === 'post911') {
+                monthlyEducation = 2169; // Monthly education benefit
+                monthlyBAH = location === 'online' ? 854 : 1856; // BAH varies by location
+            } else if (gibillType === 'mgib') {
+                monthlyEducation = 2272; // Monthly MGIB benefit
+                monthlyBAH = 0; // MGIB includes BAH in payment
+            } else if (gibillType === 'reserve') {
+                monthlyEducation = 419; // Reserve GI Bill
+                monthlyBAH = 598;
+            }
+            
+            const totalMonthly = monthlyEducation + monthlyBAH;
+            const totalRemaining = totalMonthly * months;
+            
+            document.getElementById('gibill-monthly').textContent = '$' + monthlyEducation.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('gibill-bah').textContent = '$' + monthlyBAH.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('gibill-total').textContent = '$' + totalMonthly.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('gibill-total-remaining').textContent = '$' + totalRemaining.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        // =======================
+        // CALCULATOR 8: SURVIVOR BENEFIT PLAN
+        // =======================
+        function updateSBPCalculation() {
+            const status = document.getElementById('sbp-status').value;
+            const retirement = parseInt(document.getElementById('sbp-retirement').value) || 3000;
+            const beneficiary = document.getElementById('sbp-beneficiary').value;
+            const dependents = parseInt(document.getElementById('sbp-dependents').value) || 1;
+            
+            // SBP is typically 55% of military retirement pay
+            // For active duty, use retirement equivalent
+            let sbpBenefit = retirement * 0.55;
+            
+            // Adjust for beneficiary type
+            if (beneficiary === 'spouse-child') {
+                sbpBenefit *= 1.1; // 10% more for multiple beneficiaries
+            } else if (beneficiary === 'child') {
+                sbpBenefit *= 0.7; // Children-only benefits
+            } else if (beneficiary === 'parent') {
+                sbpBenefit *= 0.8; // Parent benefits
+            }
+            
+            const annualSBP = sbpBenefit * 12;
+            
+            document.getElementById('sbp-monthly').textContent = '$' + sbpBenefit.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('sbp-annual').textContent = '$' + annualSBP.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Set disability calculator as active by default
+            document.getElementById('disability-calc').classList.add('active');
+            document.querySelector('[data-calc="disability"]').classList.add('active');
+            
             loadState();
             if (state.conditions.length === 0) {
                 render();

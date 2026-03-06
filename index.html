@@ -4,94 +4,211 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate VA Disability Calculator 2026</title>
-    <!-- Tailwind CSS for Modern Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF for export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Custom scrollbar and subtle animations */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .tooltip-container { position: relative; }
+        .tooltip-text { 
+            visibility: hidden; 
+            background-color: #1f2937; 
+            color: #fff; 
+            text-align: center; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            position: absolute; 
+            z-index: 50; 
+            bottom: 125%; 
+            left: 50%; 
+            margin-left: -60px; 
+            width: 120px; 
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+        }
+        @media print {
+            body { background: white; }
+            .no-print { display: none; }
+            .page-break { page-break-after: always; }
+        }
+        .step-box { transition: all 0.3s ease; }
+        .step-box:hover { transform: translateX(4px); }
+        .calculation-step { font-family: 'Monaco', 'Courier New', monospace; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Top Navigation Bar -->
-    <nav class="bg-blue-900 text-white shadow-md">
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-900 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-shield-halved text-2xl text-emerald-400"></i>
-                <span class="font-bold text-xl tracking-tight">VA Calc Pro <span class="text-blue-300 font-normal text-sm ml-1">2026 Edition</span></span>
+                <span class="font-bold text-lg sm:text-xl tracking-tight">VA Calc Pro <span class="text-blue-300 font-normal text-xs sm:text-sm ml-1">2026 Edition</span></span>
             </div>
-            <button onclick="resetCalculator()" class="text-sm font-semibold text-blue-200 hover:text-white transition-colors">
-                <i class="fa-solid fa-rotate-right mr-1"></i> Reset All
-            </button>
+            <div class="flex items-center space-x-3">
+                <button onclick="openHelpModal()" class="text-sm font-semibold text-blue-200 hover:text-white transition-colors" aria-label="Open help information">
+                    <i class="fa-solid fa-circle-question mr-1"></i> <span class="hidden sm:inline">Help</span>
+                </button>
+                <button onclick="resetCalculator()" class="text-sm font-semibold text-blue-200 hover:text-white transition-colors" aria-label="Reset calculator">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> <span class="hidden sm:inline">Reset</span>
+                </button>
+            </div>
         </div>
     </nav>
 
+    <!-- Sticky Disclaimer Banner -->
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-3 text-sm text-amber-800 no-print" role="alert">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+        <strong>Disclaimer:</strong> This calculator is an <strong>estimator only</strong>. Official calculations are made by the VA. Use for budget planning and understanding potential benefits.
+    </div>
+
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <main class="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
         <div class="mb-8">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Disability Pay Calculator</h1>
-            <p class="text-slate-500 mt-2 font-medium">Calculates standard VA Math, Bilateral Factors, and official 2026 rates (2.8% COLA).</p>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">VA Disability Pay Calculator</h1>
+            <p class="text-slate-500 mt-2 font-medium text-sm sm:text-base">Combined ratings, bilateral factors, and 2026 compensation rates (2.8% COLA)</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- LEFT COLUMN: Inputs -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            <!-- LEFT COLUMN: Input Section -->
             <div class="lg:col-span-7 space-y-6">
-                
+
                 <!-- 1. Add Condition Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
                     <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">1. Add Service-Connected Conditions</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex-1">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Disability Rating</label>
-                            <select id="new-rating" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none font-semibold cursor-pointer">
-                                <option value="100">100%</option>
-                                <option value="90">90%</option>
-                                <option value="80">80%</option>
-                                <option value="70">70%</option>
-                                <option value="60">60%</option>
-                                <option value="50">50%</option>
-                                <option value="40">40%</option>
-                                <option value="30">30%</option>
-                                <option value="20">20%</option>
-                                <option value="10" selected>10%</option>
-                                <option value="0">0%</option>
+                    <div class="space-y-4">
+                        <!-- Condition Name -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                Condition Name/Diagnosis <span class="text-slate-400">(optional)</span>
+                            </label>
+                            <input type="text" id="new-name" placeholder="e.g., PTSD, Tinnitus, Back Injury..." class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none" />
+                        </div>
+
+                        <!-- Suggested Conditions Dropdown -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                Common VA Conditions <span class="text-slate-400">(quick select)</span>
+                            </label>
+                            <select id="common-conditions" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none cursor-pointer" onchange="selectCommonCondition()">
+                                <option value="">-- Select a common condition --</option>
+                                <option value="PTSD">PTSD (Post-Traumatic Stress Disorder)</option>
+                                <option value="Tinnitus">Tinnitus (Ringing in Ears)</option>
+                                <option value="Sleep Apnea">Sleep Apnea</option>
+                                <option value="Hearing Loss">Hearing Loss</option>
+                                <option value="Back Injury">Back Injury / Lumbar Strain</option>
+                                <option value="Knee Injury">Knee Injury</option>
+                                <option value="TBI">TBI (Traumatic Brain Injury)</option>
+                                <option value="Diabetes">Type 2 Diabetes</option>
+                                <option value="Arthritis">Arthritis</option>
+                                <option value="Migraines">Migraines / Headaches</option>
                             </select>
                         </div>
-                        <div class="flex-1">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Extremity / Bilateral Type</label>
-                            <select id="new-extremity" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none cursor-pointer">
-                                <option value="none">None / General</option>
-                                <option value="left-arm">Left Arm</option>
-                                <option value="right-arm">Right Arm</option>
-                                <option value="left-leg">Left Leg</option>
-                                <option value="right-leg">Right Leg</option>
-                            </select>
+
+                        <!-- Rating and Extremity Selection -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                    Disability Rating
+                                    <span class="tooltip-container cursor-help">
+                                        <i class="fa-solid fa-circle-info text-blue-500 text-xs"></i>
+                                        <span class="tooltip-text">VA assigns in 10% increments</span>
+                                    </span>
+                                </label>
+                                <select id="new-rating" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none font-semibold cursor-pointer">
+                                    <option value="100">100%</option>
+                                    <option value="90">90%</option>
+                                    <option value="80">80%</option>
+                                    <option value="70">70%</option>
+                                    <option value="60">60%</option>
+                                    <option value="50">50%</option>
+                                    <option value="40">40%</option>
+                                    <option value="30">30%</option>
+                                    <option value="20">20%</option>
+                                    <option value="10" selected>10%</option>
+                                    <option value="0">0%</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                    Body Location
+                                    <span class="tooltip-container cursor-help">
+                                        <i class="fa-solid fa-circle-info text-blue-500 text-xs"></i>
+                                        <span class="tooltip-text">For bilateral (both sides)</span>
+                                    </span>
+                                </label>
+                                <select id="new-extremity" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none cursor-pointer">
+                                    <option value="none">None / General</option>
+                                    <option value="left-arm">Left Arm</option>
+                                    <option value="right-arm">Right Arm</option>
+                                    <option value="left-leg">Left Leg</option>
+                                    <option value="right-leg">Right Leg</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="flex items-end">
-                            <button onclick="addCondition()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-sm whitespace-nowrap">
-                                <i class="fa-solid fa-plus mr-1"></i> Add
-                            </button>
-                        </div>
+
+                        <button onclick="addCondition()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-sm">
+                            <i class="fa-solid fa-plus mr-2"></i> Add Condition
+                        </button>
                     </div>
 
-                    <!-- List of Conditions -->
+                    <!-- Conditions List -->
                     <div id="conditions-list" class="space-y-3 mt-6">
-                        <!-- Javascript populates this -->
+                        <!-- Populated by JavaScript -->
                     </div>
                 </div>
 
-                <!-- 2. Dependents Card -->
-                <div id="dependents-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 transition-opacity duration-300">
+                <!-- 2. Educational Breakdown Section (Collapsible) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <button onclick="toggleEducation()" class="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors" aria-expanded="false">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-lightbulb text-amber-500 text-xl"></i>
+                            <h2 class="text-lg font-bold text-slate-800">How Combined Ratings Work</h2>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform" id="edu-chevron"></i>
+                    </button>
+                    <div id="education-content" class="hidden border-t border-slate-100 p-4 sm:p-6 space-y-4 bg-slate-50">
+                        <p class="text-sm text-slate-600">
+                            VA disability ratings don't simply add up. Instead, the VA uses a specific formula called the <strong>"Whole Person Theory"</strong> to ensure your combined rating never exceeds 100%.
+                        </p>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                            <p class="text-sm font-semibold text-blue-900">The Process:</p>
+                            <ol class="text-sm text-blue-800 space-y-1 ml-4 list-decimal">
+                                <li>List ratings from highest to lowest</li>
+                                <li>Use the VA Combined Ratings Table to find combined value</li>
+                                <li>If you have 3+ ratings, repeat with new result + next rating</li>
+                                <li>Round final result to nearest 10%</li>
+                            </ol>
+                        </div>
+                        <div id="calculation-display" class="bg-slate-100 rounded-lg p-3 space-y-2 calculation-step text-sm font-mono text-slate-700">
+                            <p>Add conditions above to see step-by-step breakdown...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Dependents Card -->
+                <div id="dependents-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 transition-opacity duration-300">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
                         <h2 class="text-lg font-bold text-slate-800">2. Dependent Status</h2>
-                        <span id="dep-warning" class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded hidden">Requires 30% Rating</span>
+                        <span id="dep-warning" class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded hidden">Requires 30%+ Rating</span>
                     </div>
                     
                     <div class="space-y-5">
@@ -99,16 +216,16 @@
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-semibold text-slate-700">Dependent Spouse</span>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="dep-spouse" class="sr-only peer" onchange="updateDependents('spouse')">
+                                <input type="checkbox" id="dep-spouse" class="sr-only peer" onchange="updateDependents('spouse')" aria-label="Add dependent spouse">
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
-                        
-                        <!-- A/A Spouse (Conditional) -->
+
+                        <!-- A/A Spouse -->
                         <div id="aa-container" class="hidden items-center justify-between pl-4 border-l-2 border-blue-100">
                             <span class="text-sm font-medium text-slate-600">Spouse requires Aid & Attendance?</span>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="dep-aa" class="sr-only peer" onchange="updateDependents('aaSpouse')">
+                                <input type="checkbox" id="dep-aa" class="sr-only peer" onchange="updateDependents('aaSpouse')" aria-label="Spouse requires aid and attendance">
                                 <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
                             </label>
                         </div>
@@ -117,39 +234,76 @@
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-semibold text-slate-700">Dependent Parents</span>
                             <div class="flex bg-slate-100 rounded-lg p-1">
-                                <button id="p-0" onclick="updateDependents('parents', 0)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-blue-700">0</button>
-                                <button id="p-1" onclick="updateDependents('parents', 1)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700">1</button>
-                                <button id="p-2" onclick="updateDependents('parents', 2)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700">2</button>
+                                <button id="p-0" onclick="updateDependents('parents', 0)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-white shadow-sm text-blue-700" aria-label="No dependent parents">0</button>
+                                <button id="p-1" onclick="updateDependents('parents', 1)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700" aria-label="1 dependent parent">1</button>
+                                <button id="p-2" onclick="updateDependents('parents', 2)" class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-500 hover:text-slate-700" aria-label="2 dependent parents">2</button>
                             </div>
                         </div>
 
                         <!-- Children Under 18 -->
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-semibold text-slate-700">Children (Under 18)</span>
-                            <div class="flex items-center space-x-3">
-                                <button onclick="changeChild('u18', -1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold transition-colors">-</button>
-                                <span id="val-u18" class="w-4 text-center font-semibold text-slate-800">0</span>
-                                <button onclick="changeChild('u18', 1)" class="w-8 h-8 rounded-full bg-slate-100 text-blue-600 hover:bg-blue-100 flex items-center justify-center font-bold transition-colors">+</button>
+                            <div class="flex items-center space-x-2 sm:space-x-3">
+                                <button onclick="changeChild('u18', -1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold transition-colors" aria-label="Decrease children under 18">−</button>
+                                <span id="val-u18" class="w-4 text-center font-semibold text-slate-800" aria-live="polite">0</span>
+                                <button onclick="changeChild('u18', 1)" class="w-8 h-8 rounded-full bg-slate-100 text-blue-600 hover:bg-blue-100 flex items-center justify-center font-bold transition-colors" aria-label="Increase children under 18">+</button>
                             </div>
                         </div>
 
                         <!-- Children Over 18 (School) -->
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-semibold text-slate-700">Children (18-23 in School)</span>
-                            <div class="flex items-center space-x-3">
-                                <button onclick="changeChild('o18', -1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold transition-colors">-</button>
-                                <span id="val-o18" class="w-4 text-center font-semibold text-slate-800">0</span>
-                                <button onclick="changeChild('o18', 1)" class="w-8 h-8 rounded-full bg-slate-100 text-blue-600 hover:bg-blue-100 flex items-center justify-center font-bold transition-colors">+</button>
+                            <div class="flex items-center space-x-2 sm:space-x-3">
+                                <button onclick="changeChild('o18', -1)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold transition-colors" aria-label="Decrease children in school">−</button>
+                                <span id="val-o18" class="w-4 text-center font-semibold text-slate-800" aria-live="polite">0</span>
+                                <button onclick="changeChild('o18', 1)" class="w-8 h-8 rounded-full bg-slate-100 text-blue-600 hover:bg-blue-100 flex items-center justify-center font-bold transition-colors" aria-label="Increase children in school">+</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. FAQ Section (Collapsible) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <button onclick="toggleFAQ()" class="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors" aria-expanded="false">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-circle-question text-emerald-500 text-xl"></i>
+                            <h2 class="text-lg font-bold text-slate-800">Frequently Asked Questions</h2>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform" id="faq-chevron"></i>
+                    </button>
+                    <div id="faq-content" class="hidden border-t border-slate-100 p-4 sm:p-6 bg-slate-50 space-y-5">
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">Why don't my ratings just add up?</h3>
+                            <p class="text-sm text-slate-600">The VA uses the "Whole Person Theory" so you're never rated above 100%. A person can't be more than 100% disabled.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">What's a bilateral factor?</h3>
+                            <p class="text-sm text-slate-600">If you have matching limbs disabled (both arms OR both legs), the VA adds a 10% bonus on top. This rewards service members with multiple extremity injuries.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">When do I qualify for dependent benefits?</h3>
+                            <p class="text-sm text-slate-600">You must have a combined rating of 30% or higher to claim dependent benefits (spouse, children, parents).</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">What's Aid & Attendance?</h3>
+                            <p class="text-sm text-slate-600">Extra monthly pay if your spouse needs regular help with daily living activities. Requires special approval.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">Are these rates current?</h3>
+                            <p class="text-sm text-slate-600">Yes, these are 2026 rates with the 2.8% COLA increase applied. Rates update annually in January.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-900 mb-1">How do I increase my rating?</h3>
+                            <p class="text-sm text-slate-600">You can file a claim for a rating increase with new medical evidence. Contact a Veterans Service Officer (VSO) for help.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: Sticky Results -->
+            <!-- RIGHT COLUMN: Sticky Results Panel -->
             <div class="lg:col-span-5 relative">
-                <div class="sticky top-8 bg-gradient-to-br from-blue-900 to-slate-900 rounded-3xl shadow-2xl text-white p-8 overflow-hidden">
-                    <!-- Background aesthetic flare -->
+                <div class="sticky top-24 bg-gradient-to-br from-blue-900 to-slate-900 rounded-3xl shadow-2xl text-white p-4 sm:p-8 overflow-hidden">
+                    <!-- Background flare -->
                     <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
                     <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
 
@@ -157,49 +311,106 @@
                     
                     <!-- Circular Progress Ring -->
                     <div class="flex justify-center mb-6 relative z-10">
-                        <div class="relative w-48 h-48">
-                            <svg class="transform -rotate-90 w-48 h-48">
-                                <circle cx="96" cy="96" r="80" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-700 opacity-50" />
-                                <circle id="rating-ring" cx="96" cy="96" r="80" stroke="currentColor" stroke-width="12" fill="transparent"
-                                        stroke-dasharray="502.65" stroke-dashoffset="502.65"
-                                        class="text-emerald-400 transition-all duration-1000 ease-out" />
+                        <div class="relative w-32 sm:w-48 h-32 sm:h-48">
+                            <svg class="transform -rotate-90 w-32 sm:w-48 h-32 sm:h-48">
+                                <circle cx="60" cy="60" r="50" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-700 opacity-50 sm:cx-96 sm:cy-96 sm:r-80 sm:stroke-width-12" />
+                                <circle id="rating-ring" cx="60" cy="60" r="50" stroke="currentColor" stroke-width="8" fill="transparent"
+                                        stroke-dasharray="314.16" stroke-dashoffset="314.16"
+                                        class="text-emerald-400 transition-all duration-1000 ease-out sm:cx-96 sm:cy-96 sm:r-80 sm:stroke-width-12" />
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center flex-col">
-                                <span class="text-5xl font-extrabold" id="final-rating-text">0%</span>
+                                <span class="text-3xl sm:text-5xl font-extrabold" id="final-rating-text">0%</span>
                                 <span class="text-xs text-blue-200 mt-1 uppercase tracking-wider font-semibold">Combined</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="space-y-3 relative z-10">
-                        <div class="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                    <div class="space-y-3 relative z-10 mb-4">
+                        <div class="flex justify-between items-center text-xs sm:text-sm border-b border-white/10 pb-2">
                             <span class="text-slate-300">Exact Raw Value</span>
                             <span class="font-mono font-bold text-blue-200" id="exact-rating-text">0.0%</span>
                         </div>
                         
                         <!-- Bilateral Alert -->
-                        <div id="bilateral-alert" class="hidden flex items-start space-x-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs">
-                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5"></i>
-                            <span class="text-emerald-100">10% Bilateral Factor was successfully applied and resulted in a higher combined rating.</span>
+                        <div id="bilateral-alert" class="hidden flex items-start space-x-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 sm:p-3 text-xs">
+                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5 flex-shrink-0"></i>
+                            <span class="text-emerald-100">10% Bilateral Factor applied for matching extremities.</span>
                         </div>
                     </div>
 
-                    <!-- Money Pay Component -->
-                    <div class="mt-8 bg-white/10 rounded-2xl p-6 border border-white/10 backdrop-blur-md relative z-10">
-                        <p class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">2026 Monthly Compensation</p>
-                        <p class="text-4xl sm:text-5xl font-extrabold text-emerald-400 drop-shadow-lg" id="monthly-pay">$0.00</p>
-                        <p class="text-xs text-blue-200/70 mt-3 font-medium flex items-center">
-                            <i class="fa-solid fa-calendar-check mr-1.5"></i> Jan 1, 2026 Pay Rates (Tax-Free)
-                        </p>
+                    <!-- Monthly Compensation -->
+                    <div class="mt-6 bg-white/10 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-md relative z-10">
+                        <p class="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">Monthly Compensation</p>
+                        <p class="text-3xl sm:text-5xl font-extrabold text-emerald-400 drop-shadow-lg" id="monthly-pay">$0.00</p>
+                        <p class="text-xs text-blue-200/70 mt-2 font-medium">2026 Tax-Free Payment</p>
+                    </div>
+
+                    <!-- Annual Compensation -->
+                    <div class="mt-3 bg-white/5 rounded-xl p-3 sm:p-4 border border-white/5 backdrop-blur-md relative z-10">
+                        <p class="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">Annual Compensation</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-emerald-300" id="annual-pay">$0.00</p>
+                    </div>
+
+                    <!-- Dependent Breakdown -->
+                    <div id="dependent-breakdown" class="hidden mt-4 bg-white/5 rounded-xl p-3 sm:p-4 border border-white/5 relative z-10 space-y-2">
+                        <p class="text-blue-300 text-xs font-bold uppercase tracking-widest">Payment Breakdown</p>
+                        <div id="breakdown-content" class="text-xs sm:text-sm space-y-1 text-blue-100">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons -->
+                    <div class="mt-6 space-y-2 no-print relative z-10">
+                        <button onclick="exportToPDF()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg transition-colors shadow-sm text-sm sm:text-base" aria-label="Export calculation to PDF">
+                            <i class="fa-solid fa-file-pdf mr-2"></i> Export PDF
+                        </button>
+                        <button onclick="shareCalculation()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg transition-colors shadow-sm text-sm sm:text-base" aria-label="Share calculation">
+                            <i class="fa-solid fa-share-nodes mr-2"></i> Share
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-2xl font-bold text-slate-900">Help & Information</h2>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600" aria-label="Close help modal">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-sm text-slate-600">
+                <h3 class="font-bold text-slate-900">About This Calculator</h3>
+                <p>This tool estimates your VA disability compensation based on your combined rating and dependents. It uses the 2026 official VA compensation rates with the 2.8% COLA increase.</p>
+                
+                <h3 class="font-bold text-slate-900 mt-4">Important Notes</h3>
+                <ul class="list-disc ml-5 space-y-1">
+                    <li>This is an <strong>estimate only</strong> - official calculations are made by the VA</li>
+                    <li>Dependent benefits require a 30%+ combined rating</li>
+                    <li>Rates update annually, typically in January</li>
+                    <li>For official ratings and payments, log into VA.gov</li>
+                </ul>
+
+                <h3 class="font-bold text-slate-900 mt-4">Get Help</h3>
+                <p>Questions about your disability rating? Contact:</p>
+                <ul class="list-disc ml-5 space-y-1">
+                    <li><strong>VA Benefits Hotline:</strong> 1-800-827-1000</li>
+                    <li><strong>VSO (Veterans Service Officer):</strong> Free assistance with claims</li>
+                    <li><strong>VA.gov:</strong> Official ratings and compensation information</li>
+                </ul>
+
+                <h3 class="font-bold text-slate-900 mt-4">Data Privacy</h3>
+                <p>Your calculations are stored locally in your browser. No data is sent to servers.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Application Logic -->
     <script>
-        // Official 2026 VA Disability Rates (Based on 2.8% COLA)
+        // Official 2026 VA Disability Rates (2.8% COLA)
         const rates2026 = {
             10: { base: 180.42 },
             20: { base: 356.66 },
@@ -228,16 +439,14 @@
             finalRating: 0
         };
 
-        // Combine Array of Ratings (Exact CFR 4.25 Logic)
+        // Combine ratings using VA formula
         function combineRatings(ratingsArray) {
             if (ratingsArray.length === 0) return 0;
-            // Sort highest to lowest percentage
             const sorted = [...ratingsArray].sort((a, b) => b - a);
             let combined = 0;
             let efficiency = 100;
             
             for (let r of sorted) {
-                // Round to the nearest whole number at each step
                 let added = Math.round(efficiency * (r / 100));
                 combined += added;
                 efficiency -= added;
@@ -245,9 +454,9 @@
             return combined;
         }
 
-        // Calculate Overall Rating With and Without Bilateral Factor
+        // Calculate overall rating
         function calculateOverall() {
-            if (state.conditions.length === 0) return { finalRating: 0, exact: 0, bilateralApplied: false };
+            if (state.conditions.length === 0) return { finalRating: 0, exact: 0, bilateralApplied: false, steps: [] };
 
             let hasLeftArm = state.conditions.some(r => r.type === 'left-arm');
             let hasRightArm = state.conditions.some(r => r.type === 'right-arm');
@@ -269,12 +478,11 @@
                 }
             });
 
-            // --- 1. Calculate WITH Bilateral Factor ---
             let combinedWithBilateral = 0;
             if (bilateralRatings.length > 0) {
                 let combinedBilat = combineRatings(bilateralRatings);
                 let factor = combinedBilat * 0.10;
-                let finalBilat = Math.round(combinedBilat + factor); // Round to nearest integer per CFR
+                let finalBilat = Math.round(combinedBilat + factor);
                 let allRatingsForCalc = [...standardRatings, finalBilat];
                 combinedWithBilateral = combineRatings(allRatingsForCalc);
             } else {
@@ -283,14 +491,11 @@
             let finalWithBilateral = Math.round(combinedWithBilateral / 10) * 10;
             if (finalWithBilateral > 100) finalWithBilateral = 100;
 
-            // --- 2. Calculate WITHOUT Bilateral Factor ---
             let allRatingsRaw = state.conditions.map(c => c.rating);
             let combinedWithoutBilateral = combineRatings(allRatingsRaw);
             let finalWithoutBilateral = Math.round(combinedWithoutBilateral / 10) * 10;
             if (finalWithoutBilateral > 100) finalWithoutBilateral = 100;
 
-            // --- 3. Determine Highest Per Modern VA Rule ---
-            // The VA will automatically exclude the bilateral factor if it lowers your total rating.
             let bilateralApplied = false;
             let appliedExact = combinedWithoutBilateral;
             let finalRating = finalWithoutBilateral;
@@ -311,7 +516,7 @@
             };
         }
 
-        // Calculate Official 2026 Pay Amount
+        // Get compensation amount
         function getCompensation(rating, deps) {
             if (rating < 10) return 0.00;
             if (rating === 10) return rates2026[10].base;
@@ -339,7 +544,6 @@
                     extraU18 = deps.childU18 - 1;
                     extraO18 = deps.childO18;
                 } else {
-                    // First child is over 18 - applying premium difference
                     extraO18 = deps.childO18 - 1;
                     baseRate += (r.childO18 - r.childU18);
                 }
@@ -360,66 +564,201 @@
             return baseRate;
         }
 
-        // Actions
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('vaCalcState', JSON.stringify(state));
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem('vaCalcState');
+            if (saved) {
+                state = JSON.parse(saved);
+                render();
+            }
+        }
+
+        // Add condition
         function addCondition() {
             const ratingInput = document.getElementById('new-rating').value;
             const extremityInput = document.getElementById('new-extremity').value;
+            const nameInput = document.getElementById('new-name').value;
             
-            if(!ratingInput) return;
+            if (!ratingInput) return;
 
             state.conditions.push({
                 id: Date.now(),
                 rating: parseInt(ratingInput),
-                type: extremityInput
+                type: extremityInput,
+                name: nameInput
             });
-            
-            // Reset to defaults
+
             document.getElementById('new-rating').value = '10';
             document.getElementById('new-extremity').value = 'none';
+            document.getElementById('new-name').value = '';
+            document.getElementById('common-conditions').value = '';
             
+            saveState();
             render();
         }
 
+        // Select common condition
+        function selectCommonCondition() {
+            const condition = document.getElementById('common-conditions').value;
+            if (condition) {
+                document.getElementById('new-name').value = condition;
+            }
+        }
+
+        // Remove condition
         function removeCondition(id) {
             state.conditions = state.conditions.filter(c => c.id !== id);
+            saveState();
             render();
         }
 
+        // Update dependents
         function updateDependents(field, val = null) {
             if (field === 'spouse') {
                 state.dependents.spouse = document.getElementById('dep-spouse').checked;
                 if (!state.dependents.spouse) {
-                     state.dependents.aaSpouse = false;
-                     document.getElementById('dep-aa').checked = false;
+                    state.dependents.aaSpouse = false;
+                    document.getElementById('dep-aa').checked = false;
                 }
             } else if (field === 'aaSpouse') {
                 state.dependents.aaSpouse = document.getElementById('dep-aa').checked;
             } else if (field === 'parents') {
                 state.dependents.parents = parseInt(val);
             }
+            saveState();
             render();
         }
 
+        // Change child count
         function changeChild(type, delta) {
             if (type === 'u18') {
                 state.dependents.childU18 = Math.max(0, state.dependents.childU18 + delta);
             } else {
                 state.dependents.childO18 = Math.max(0, state.dependents.childO18 + delta);
             }
+            saveState();
             render();
         }
 
+        // Reset calculator
         function resetCalculator() {
-            state.conditions = [];
-            state.dependents = { spouse: false, parents: 0, childU18: 0, childO18: 0, aaSpouse: false };
-            document.getElementById('dep-spouse').checked = false;
-            document.getElementById('dep-aa').checked = false;
-            render();
+            if (confirm('Reset all conditions and dependents?')) {
+                state.conditions = [];
+                state.dependents = { spouse: false, parents: 0, childU18: 0, childO18: 0, aaSpouse: false };
+                localStorage.removeItem('vaCalcState');
+                render();
+            }
         }
 
-        // Master UI Render Loop
+        // Toggle education section
+        function toggleEducation() {
+            const content = document.getElementById('education-content');
+            const chevron = document.getElementById('edu-chevron');
+            content.classList.toggle('hidden');
+            chevron.style.transform = content.classList.contains('hidden') ? 'rotate(0)' : 'rotate(180deg)';
+            const button = event.target.closest('button');
+            button.setAttribute('aria-expanded', !content.classList.contains('hidden'));
+        }
+
+        // Toggle FAQ section
+        function toggleFAQ() {
+            const content = document.getElementById('faq-content');
+            const chevron = document.getElementById('faq-chevron');
+            content.classList.toggle('hidden');
+            chevron.style.transform = content.classList.contains('hidden') ? 'rotate(0)' : 'rotate(180deg)';
+            const button = event.target.closest('button');
+            button.setAttribute('aria-expanded', !content.classList.contains('hidden'));
+        }
+
+        // Update calculation display
+        function updateCalculationDisplay() {
+            if (state.conditions.length === 0) {
+                document.getElementById('calculation-display').innerHTML = '<p>Add conditions to see step-by-step calculation...</p>';
+                return;
+            }
+
+            const sorted = [...state.conditions].sort((a, b) => b.rating - a.rating);
+            let html = '<p class="mb-2">Step-by-step calculation:</p>';
+            html += '<p class="mb-2">' + sorted.map(c => c.rating + '%').join(' + ') + ' = ?</p>';
+            
+            const results = calculateOverall();
+            html += '<p class="text-emerald-500 font-bold">Result: ' + results.finalRating + '% combined rating</p>';
+            
+            if (results.bilateralApplied) {
+                html += '<p class="text-sm text-emerald-300">✓ Bilateral factor applied (+10%)</p>';
+            }
+
+            document.getElementById('calculation-display').innerHTML = html;
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const element = document.querySelector('.sticky');
+            const opt = {
+                margin: 10,
+                filename: 'VA_Disability_Calculation.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            const content = `
+            <div style="padding: 20px; font-family: Arial, sans-serif;">
+                <h1>VA Disability Calculation Summary</h1>
+                <p><strong>Calculation Date:</strong> ${new Date().toLocaleDateString()}</p>
+                
+                <h2>Conditions:</h2>
+                <ul>
+                    ${state.conditions.map(c => `<li>${c.name ? c.name + ' - ' : ''}${c.rating}% (${typeLabels[c.type]})</li>`).join('')}
+                </ul>
+                
+                <h2>Results:</h2>
+                <p><strong>Combined Rating:</strong> ${state.finalRating}%</p>
+                <p><strong>Monthly Payment:</strong> $${getCompensation(state.finalRating, state.dependents).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                <p><strong>Annual Payment:</strong> $${(getCompensation(state.finalRating, state.dependents) * 12).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                
+                <p style="margin-top: 20px; font-size: 12px; color: #666;">
+                    <strong>Disclaimer:</strong> This is an estimate only. Official calculations are performed by the VA.
+                </p>
+            </div>
+            `;
+
+            html2pdf().set(opt).from(content).save();
+        }
+
+        // Share calculation
+        function shareCalculation() {
+            const url = window.location.href;
+            const text = `My VA Disability Rating: ${state.finalRating}% | Monthly: $${getCompensation(state.finalRating, state.dependents).toFixed(2)}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'VA Disability Calculation',
+                    text: text,
+                    url: url
+                });
+            } else {
+                alert('Share this link: ' + url);
+            }
+        }
+
+        // Help modal functions
+        function openHelpModal() {
+            document.getElementById('help-modal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').classList.add('hidden');
+        }
+
+        // Master render function
         function render() {
-            // 1. Render Conditions List
+            // Render conditions
             const listContainer = document.getElementById('conditions-list');
             listContainer.innerHTML = '';
             
@@ -428,7 +767,7 @@
             } else {
                 state.conditions.forEach(c => {
                     const div = document.createElement('div');
-                    div.className = "fade-in flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl hover:border-blue-300 transition-colors shadow-sm";
+                    div.className = "fade-in flex items-center justify-between p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl hover:border-blue-300 transition-colors shadow-sm";
                     
                     let icon = 'fa-circle-dot';
                     let iconColor = 'text-blue-500';
@@ -438,61 +777,44 @@
                     if (c.type.includes('leg')) { icon = 'fa-shoe-prints'; iconColor = 'text-amber-500'; iconBg = 'bg-amber-100'; }
                     
                     div.innerHTML = `
-                        <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 rounded-full ${iconBg} ${iconColor} flex items-center justify-center">
-                                <i class="fa-solid ${icon}"></i>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full ${iconBg} ${iconColor} flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid ${icon} text-sm sm:text-base"></i>
                             </div>
                             <div>
-                                <p class="font-bold text-slate-800 text-base leading-tight">${c.rating}% Rating</p>
-                                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-0.5">${typeLabels[c.type]}</p>
+                                <p class="font-bold text-slate-800 text-sm">${c.rating}% Rating</p>
+                                ${c.name ? `<p class="text-xs font-semibold text-blue-600">${c.name}</p>` : ''}
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide">${typeLabels[c.type]}</p>
                             </div>
                         </div>
-                        <button onclick="removeCondition(${c.id})" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                            <i class="fa-solid fa-trash-can"></i>
+                        <button onclick="removeCondition(${c.id})" class="w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0" aria-label="Remove condition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     `;
                     listContainer.appendChild(div);
                 });
             }
 
-            // 2. Perform Math
+            // Calculate results
             const results = calculateOverall();
             state.finalRating = results.finalRating;
             const pay = getCompensation(state.finalRating, state.dependents);
+            const annualPay = pay * 12;
 
-            // 3. Update Inputs & Toggles
-            // Parents Buttons
-            [0, 1, 2].forEach(num => {
-                const btn = document.getElementById(`p-${num}`);
-                if (state.dependents.parents === num) {
-                    btn.classList.add('bg-white', 'shadow-sm', 'text-blue-700', 'border', 'border-slate-200');
-                    btn.classList.remove('text-slate-500', 'hover:text-slate-700', 'border-transparent');
-                } else {
-                    btn.classList.remove('bg-white', 'shadow-sm', 'text-blue-700', 'border', 'border-slate-200');
-                    btn.classList.add('text-slate-500', 'hover:text-slate-700', 'border-transparent');
-                }
-            });
-
-            // Children Counters
-            document.getElementById('val-u18').innerText = state.dependents.childU18;
-            document.getElementById('val-o18').innerText = state.dependents.childO18;
-
-            // Dependent Card Visibility (Requires >= 30%)
+            // Update dependent section
             const depSection = document.getElementById('dependents-card');
             const depWarning = document.getElementById('dep-warning');
             if (state.finalRating >= 30) {
                 depSection.classList.remove('opacity-50');
                 depWarning.classList.add('hidden');
-                // Enable inputs
                 depSection.style.pointerEvents = 'auto';
             } else {
                 depSection.classList.add('opacity-50');
                 depWarning.classList.remove('hidden');
-                // Disable inputs
                 depSection.style.pointerEvents = 'none';
             }
 
-            // Aid & Attendance Visibility
+            // Update Aid & Attendance visibility
             const aaContainer = document.getElementById('aa-container');
             if (state.dependents.spouse) {
                 aaContainer.classList.remove('hidden');
@@ -502,14 +824,29 @@
                 aaContainer.classList.remove('flex');
             }
 
-            // 4. Update Right Column Visuals
+            // Update parent buttons
+            [0, 1, 2].forEach(num => {
+                const btn = document.getElementById(`p-${num}`);
+                if (state.dependents.parents === num) {
+                    btn.classList.add('bg-white', 'shadow-sm', 'text-blue-700');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('bg-white', 'shadow-sm', 'text-blue-700');
+                    btn.classList.add('text-slate-500');
+                }
+            });
+
+            // Update child counts
+            document.getElementById('val-u18').innerText = state.dependents.childU18;
+            document.getElementById('val-o18').innerText = state.dependents.childO18;
+
+            // Update results panel
             document.getElementById('final-rating-text').innerText = state.finalRating + '%';
-            document.getElementById('exact-rating-text').innerText = results.exact.toFixed(2) + '%';
-            
-            // Format Currency
+            document.getElementById('exact-rating-text').innerText = results.exact.toFixed(1) + '%';
             document.getElementById('monthly-pay').innerText = '$' + pay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
-            // Bilateral Alert Status
+            document.getElementById('annual-pay').innerText = '$' + annualPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // Bilateral alert
             const bilatAlert = document.getElementById('bilateral-alert');
             if (results.bilateralApplied) {
                 bilatAlert.classList.remove('hidden');
@@ -517,16 +854,47 @@
                 bilatAlert.classList.add('hidden');
             }
 
-            // Update SVG Ring animation
+            // Update dependent breakdown
+            const breakdown = document.getElementById('dependent-breakdown');
+            const breakdownContent = document.getElementById('breakdown-content');
+            
+            if (state.finalRating >= 30 && (state.dependents.spouse || state.dependents.parents > 0 || state.dependents.childU18 > 0 || state.dependents.childO18 > 0)) {
+                breakdown.classList.remove('hidden');
+                let html = '';
+                if (state.dependents.spouse) html += `<div>Spouse: +$${(rates2026[state.finalRating]?.spouse ? rates2026[state.finalRating].spouse - rates2026[state.finalRating].alone : 0).toFixed(2)}</div>`;
+                if (state.dependents.aaSpouse) html += `<div>Aid & Attendance: +$${rates2026[state.finalRating]?.aaSpouse?.toFixed(2)}</div>`;
+                if (state.dependents.parents > 0) html += `<div>Parent(s): +$${(state.dependents.parents * (rates2026[state.finalRating]?.[`p${state.dependents.parents}`] ? rates2026[state.finalRating][`p${state.dependents.parents}`] - rates2026[state.finalRating].alone : 0)).toFixed(2)}</div>`;
+                if (state.dependents.childU18 > 0) html += `<div>Child(ren) U18: +$${(state.dependents.childU18 * (rates2026[state.finalRating]?.childU18 || 0)).toFixed(2)}</div>`;
+                if (state.dependents.childO18 > 0) html += `<div>Child(ren) 18-23: +$${(state.dependents.childO18 * (rates2026[state.finalRating]?.childO18 || 0)).toFixed(2)}</div>`;
+                breakdownContent.innerHTML = html || '<div>No dependent adjustments</div>';
+            } else {
+                breakdown.classList.add('hidden');
+            }
+
+            // Update SVG ring
             const circle = document.getElementById('rating-ring');
-            const circumference = 502.65; // 2 * PI * r(80)
+            const circumference = 314.16;
             const offset = circumference - (state.finalRating / 100) * circumference;
             circle.style.strokeDashoffset = offset;
+
+            // Update calculation display
+            updateCalculationDisplay();
         }
 
-        // Initialize App
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            render();
+            loadState();
+            if (state.conditions.length === 0) {
+                render();
+            }
+        });
+
+        // Close modal on background click
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('help-modal');
+            if (e.target === modal) {
+                closeHelpModal();
+            }
         });
     </script>
 </body>
